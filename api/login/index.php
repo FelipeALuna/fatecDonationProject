@@ -39,6 +39,6 @@ switch ($requestedMethod) {
         
     default:
         http_response_code(405);
-        echo json_encode(["message" => "Invalid Method"]);
+        echo json_encode(["message" => "Método invalido"]);
         break;
 }

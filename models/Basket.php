@@ -1,12 +1,13 @@
 <?php
 
 error_reporting(E_ALL);
-ini_set('display_error',1);
+ini_set('display_error', 1);
 include_once('BasketProduct.php');
 
 
 
-class Basket{
+class Basket
+{
 
     private $id;
     private $quantity;
@@ -17,10 +18,11 @@ class Basket{
     private $database;
 
     private $connection;
-    private $table = "CestaDoMes";
+    private $table = "cesta_mes";
 
-    
-    public function __construct($database){
+
+    public function __construct($database)
+    {
         $this->connection = $database;
         $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $sql = "CREATE TABLE IF NOT EXISTS $this->table (
@@ -30,112 +32,115 @@ class Basket{
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )";
-        
+
         $this->connection->exec($sql);
     }
 
 
-    public function getAllBasket(){
+    public function getAllBasket()
+    {
         $query = "SELECT * FROM $this->table";
         $basketList = $this->connection->prepare($query);
         $basketList->execute();
         return $basketList;
     }
 
-    public function getBasketById($id){
+    public function getBasketById($id)
+    {
         $this->id = $id;
-        $query = 'SELECT * FROM '.$this->table.' WHERE id= ? LIMIT 0,1'; 
+        $query = 'SELECT * FROM ' . $this->table . ' WHERE id= ? LIMIT 0,1';
         $basket = $this->connection->prepare($query);
         $basket->execute([$this->id]);
         return $basket;
-
     }
 
-    public function insertBasket($params){
-        try{
+    public function insertBasket($params)
+    {
+        try {
 
-            $this->quantity =$params["quantity"];
-            $this->description =$params["description"];
+            $this->quantity = $params["quantity"];
+            $this->description = $params["description"];
             $this->productList = $params["products"];
-           
-            $query = 'INSERT INTO '.$this->table.' 
+
+            $query = 'INSERT INTO ' . $this->table . ' 
             SET 
             quantidade=:quantity,
             descricao=:description';
 
             $basket = $this->connection->prepare($query);
 
-            $basket->bindValue('quantity',$this->quantity);
+            $basket->bindValue('quantity', $this->quantity);
             $basket->bindValue('description', $this->description);
 
-            if($basket->execute()){
+            if ($basket->execute()) {
                 $basketRecordId = $this->connection->lastInsertId();
                 $basketProduct = new BasketProduct($this->connection);
                 foreach ($this->productList as $product) {
                     $basketProductRecord = [
-                        "productId"=>$product->id,
-                        "basketId"=> $basketRecordId
+                        "productId" => $product->id,
+                        "basketId" => $basketRecordId
                     ];
                     $basketProduct->insertBasketProduct($basketProductRecord);
                 }
                 return true;
-            }else{
+            } else {
                 return false;
             }
-           
-
-        }catch(PDOException $exeption){
+        } catch (PDOException $exeption) {
             echo $exeption->getMessage();
         }
     }
 
-    public function updateBasket($params){
-        try{
+    public function updateBasket($params)
+    {
+        try {
 
             $this->id = $params["id"];
-            $this->quantity =$params["quantity"];
-            $this->description =$params["description"];
+            $this->quantity = $params["quantity"];
+            $this->description = $params["description"];
+            $this->productList = $params["products"];
 
-            $query = 'UPDATE '.$this->table.' 
+            $query = 'UPDATE ' . $this->table . ' 
             SET 
             quantidade=:quantity,
             descricao=:description 
             WHERE id = :id';
 
             $basket = $this->connection->prepare($query);
-            
             $basket->bindValue('id', $this->id);
-            $basket->bindValue('quantity',$this->quantity);
+            $basket->bindValue('quantity', $this->quantity);
             $basket->bindValue('description', $this->description);
 
-            if($basket->execute()){
+            if ($basket->execute()) {
+                $basketProduct = new BasketProduct($this->connection);
+                $basketProduct->updateBasketProductsOfBasket($this->id, $this->productList);
+
                 return true;
-            }else{
+            } else {
                 return false;
             }
-           
-
-        }catch(PDOException $exeption){
+        } catch (PDOException $exeption) {
             echo $exeption->getMessage();
         }
     }
 
-    public function deleteBasketById($id){
-        try{
+    public function deleteBasketById($id)
+    {
+        try {
             $this->id = $id;
-            $query = 'DELETE FROM '.$this->table.' WHERE id = :id';
-            $basket = $this->connection->prepare($query);            
+            $query = 'DELETE FROM ' . $this->table . ' WHERE id = :id';
+            $basket = $this->connection->prepare($query);
             $basket->bindValue('id', $this->id);
 
-            if($basket->execute()){               
+            if ($basket->execute()) {
+                $basketProduct = new BasketProduct($this->connection);
+                //$basketProduct->deleteBasketProductByBasket($this->id);
                 return true;
-            }else{
+            } else {
                 return false;
             }
-        }catch(PDOException $exeption){
+        } catch (PDOException $exeption) {
             echo $exeption->getMessage();
         }
-
     }
-
 }

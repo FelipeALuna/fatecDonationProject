@@ -4,7 +4,7 @@
 
 require($_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php');
 include_once('../../config/Database.php');
-include_once('../../models/Basket.php');
+include_once('../../models/BasketFamily.php');
 include_once('../../config/AuthKey.php');
 
 error_reporting(E_ALL);
@@ -16,53 +16,50 @@ Header('Acess-Control-Allow-Method: POST');
 
 $database = new Database();
 $databaseConnection = $database->getConnection();
-$basket = new Basket($databaseConnection);
+$basket = new BasketFamily($databaseConnection);
 $requestedMethod = $_SERVER['REQUEST_METHOD'];
 
 switch ($requestedMethod) {
     case "GET":
 
         if (isset($_GET['id'])) {
-            $basketRecord  = $basket->getBasketById($_GET['id']);
+            $basketRecord  = $basket->getBasketFamilyById($_GET['id']);
 
             if ($basketRecord->rowCount()) {
 
                 while ($row = $basketRecord->fetch(PDO::FETCH_OBJ)) {
-                    $basketRow = [
-                        "id"=> $row->id,
-                        "description" => $row->quantidade,
-                        "quantity"=> $row->descricao,
-                        "created_at"=>$row->criado_em,
-                        "updated_at"=>$row->atualizado_em
+                    $basketFamilyRow = [
+                        "id"=>$row->id_cesta_mes_familias,
+                        "quantity"=>$row->quantidade,
+                        "pickUpDate"=>$row->data_retirada,
+                        "familyId"=>$row->id_cesta_mes,
+                        "basketId"=>$row->id_familias,
                     ];
-                    echo json_encode($basketRow);
+                    echo json_encode($basketFamilyRow);
                 }
             } else {
                 echo json_encode([
-                    "message" => "Não foi encontrado nenhuma cesta"
+                    "message" => "Não foi encontrado nenhum registro"
                 ]);
             }
         } else {
-            $basketList  = $basket->getAllBasket();
+            $basketList  = $basket->getAllBasketFamily();
             if ($basketList->rowCount()) {
                 $baskets = [];
                 while ($row = $basketList->fetch(PDO::FETCH_OBJ)) {
-                    $basketRow = [
-                        "id"=> $row->id,
-                        "description" => $row->quantidade,
-                        "quantity"=> $row->descricao,
-                        "created_at"=>$row->criado_em,
-                        "updated_at"=>$row->atualizado_em
+                    $basketFamilyRow = [
+                        "id"=>$row->id_cesta_mes_familias,
+                        "quantity"=>$row->quantidade,
+                        "pickUpDate"=>$row->data_retirada,
+                        "familyId"=>$row->id_cesta_mes,
+                        "basketId"=>$row->id_familias,
                     ];
-                    $basketProducts = new BasketProduct($databaseConnection);
-                    $basketProducts = $basketProducts->getProductsOfBasket($row->id);
-                    $basketRow["products"] = $basketProducts;
-                    array_push($baskets, $basketRow);
+                    array_push($baskets, $basketFamilyRow);
                 }
                 echo json_encode($baskets);
             } else {
                 echo json_encode([
-                    "message" => "Não foi encontrado nenhuma cesta"
+                    "message" => "Não foi encontrado nenhum registro"
                 ]);
             }
         }
@@ -72,24 +69,27 @@ switch ($requestedMethod) {
         $data = json_decode(file_get_contents('php://input'));
         if (isset($data)) {
             $params = [
+                "pickUpDate" => $data->pickUpDate,
                 "quantity" => $data->quantity,
-                "description" => $data->description,
-                "products" => $data->products
+                "familyId" => $data->familyId,
+                "basketId" => $data->basketId
+
             ];
         } else if (isset($_POST)) {
             $params = [
+                "pickUpDate" => $_POST["pickUpDate"],
                 "quantity" => $_POST["quantity"],
-                "description" => $_POST["description"],
-                "products" => $_POST["products"]
+                "familyId" => $_POST["familyId"],
+                "basketId" => $_POST["basketId"]
             ];
         } else {
-            echo json_encode(["message" => "Falha ao criar cesta."]);
+            echo json_encode(["message" => "Falha ao criar registro."]);
         }
 
-        if ($basket->insertBasket($params)) {
+        if ($basket->insertBasketFamily($params)) {
             echo json_encode(["message" => "Cesta criada com sucesso!"]);
         } else {
-            echo json_encode(["message" => "Falha ao criar cesta."]);
+            echo json_encode(["message" => "Falha ao criar registro."]);
         }
 
         break;
@@ -99,19 +99,20 @@ switch ($requestedMethod) {
         if (isset($data) && isset($data->id)) {
             $params = [
                 "id" => $data->id,
+                "pickUpDate" => $data->pickUpDate,
                 "quantity" => $data->quantity,
-                "description" => $data->description,
-                "products" => $data->products
+                "familyId" => $data->familyId,
+                "basketId" => $data->basketId
             ];
         } else {
-            echo json_encode(["message" => "Falha ao atualizar cesta."]);
+            echo json_encode(["message" => "Falha ao atualizar registro."]);
             exit;
         }
 
-        if ($basket->updateBasket($params)) {
-            echo json_encode(["message" => "Cesta atualizada com sucesso!"]);
+        if ($basket->updateBasketFamily($params)) {
+            echo json_encode(["message" => "Registro atualizado com sucesso!"]);
         } else {
-            echo json_encode(["message" => "Falha ao atualizar cesta."]);
+            echo json_encode(["message" => "Falha ao atualizar registro."]);
         }
         break;
 
@@ -122,12 +123,12 @@ switch ($requestedMethod) {
         if (isset($data) && isset($data->id)) {
             $id = $data->id;
         } else {
-            echo json_encode(["message" => "Falha ao excluir cesta."]);
+            echo json_encode(["message" => "Falha ao excluir registro."]);
             return;
         }
 
-        if ($basket->deleteBasketById($id)) {
-            echo json_encode(["message" => "Cesta excluida com sucesso!"]);
+        if ($basket->deleteBasketFamilyById($id)) {
+            echo json_encode(["message" => "Registro excluido com sucesso!"]);
         } else {
             echo json_encode(["message" => "Falha ao excluir cesta."]);
             exit;

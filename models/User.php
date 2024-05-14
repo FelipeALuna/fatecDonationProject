@@ -17,6 +17,8 @@ class User
     private $adress;
     private $name;
     private $phone;
+    private $cpf;
+    private $isAdmin;
     private $create_at;
     private $updated_at;
 
@@ -36,6 +38,8 @@ class User
             endereco VARCHAR(255),
             telefone VARCHAR(15),
             senha VARCHAR(255),
+            isAdmin BOOLEAN,
+            cpf VARCHAR(11),
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )";
@@ -74,19 +78,25 @@ class User
                 ];
             } else {
 
+                $this->isAdmin = $params["isAdmin"];
+                $this->cpf = $params["cpf"];
                 $this->email = $params["email"];
                 $this->password = $params["password"];
                 $this->phone = $params["phone"];
                 $this->adress = $params["adress"];
                 $this->name = $params["name"];
                 $this->password = password_hash($this->password, PASSWORD_DEFAULT);
+                
+
                 $query = 'INSERT INTO ' . $this->table . ' 
                 SET
                 telefone=:phone,
                 endereco=:adress,
                 nome=:name,
                 email=:email,
-                senha=:password';
+                senha=:password,
+                cpf=:cpf,
+                isAdmin=:admin';
 
                 $userConnection = $this->connection->prepare($query);
 
@@ -95,6 +105,8 @@ class User
                 $userConnection->bindValue('phone', $this->phone);
                 $userConnection->bindValue('adress', $this->adress);
                 $userConnection->bindValue('name', $this->name);
+                $userConnection->bindValue('cpf', $this->cpf);
+                $userConnection->bindValue('admin', $this->isAdmin);
 
                 if ($userConnection->execute()) {
                     return [
@@ -130,7 +142,9 @@ class User
                         'exp' => $expirationdate,
                         'name'=>$userData->nome,
                         'message' => "Login efetuado com sucesso!",
-                        'userEmail' => $userData->email
+                        'userEmail' => $userData->email,
+                        'idPessoa' => $userData->id,
+                        'isAdmin' => $userData->isAdmin
                     ];
                     $authKey = new AuthKey();
                     $authKey = $authKey->getAuthKey();

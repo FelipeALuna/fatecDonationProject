@@ -20,19 +20,23 @@ switch ($requestedMethod) {
         $data = json_decode(file_get_contents('php://input'));
         if (isset($data)) {
             $params = [
+                "cpf"=> $data->cpf,
                 "email" => $data->email,
                 "password" => $data->password,
                 "name" => $data->name,
                 "adress" => $data->adress,
-                "phone" => $data->phone
+                "phone" => $data->phone,
+                "isAdmin"=> $data->isAdmin
             ];
         } else if (isset($_POST)) {
             $params = [
+                "cpf"=> $_POST["cpf"],
                 "name" => $_POST["name"],
                 "email" => $_POST["email"],
                 "password" => $_POST["password"],
                 "adress" => $_POST["adress"],
-                "phone" => $_POST["phone"]
+                "phone" => $_POST["phone"],
+                "idAdmin"=> $_POST["isAdmin"]
             ];
         } else {
             echo json_encode(["message" => "Falha ao criar usuario."]);
@@ -44,6 +48,6 @@ switch ($requestedMethod) {
         
     default:
         http_response_code(405);
-        echo json_encode(["message" => "Invalid Method"]);
+        echo json_encode(["message" => "Método invalido"]);
         break;
 }

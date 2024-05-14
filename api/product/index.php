@@ -52,8 +52,16 @@ switch ($requestedMethod) {
 
             if ($productRecord->rowCount()) {
 
-                while ($row = $productRecord->fetch(PDO::FETCH_ASSOC)) {
-                    echo json_encode($row);
+                while ($row = $productRecord->fetch(PDO::FETCH_OBJ)) {
+                    $productRow = [
+                        "id"=>$row->id,
+                        "name"=>$row->nome,
+                        "description"=>$row->descricao,
+                        "quantity"=>$row->quantidade,
+                        "created_at"=>$row->created_at,
+                        "updated_at"=>$row->updated_at
+                    ];
+                    echo json_encode($productRow);
                 }
             } else {
                 echo json_encode([
@@ -65,7 +73,15 @@ switch ($requestedMethod) {
             if ($productList->rowCount()) {
                 $products = [];
                 while ($row = $productList->fetch(PDO::FETCH_OBJ)) {
-                    array_push($products, $row);
+                    $productRow = [
+                        "id"=>$row->id,
+                        "name"=>$row->nome,
+                        "description"=>$row->descricao,
+                        "quantity"=>$row->quantidade,
+                        "created_at"=>$row->created_at,
+                        "updated_at"=>$row->updated_at
+                    ];
+                    array_push($products, $productRow);
                 }
                 echo json_encode($products);
             } else {
@@ -102,10 +118,6 @@ switch ($requestedMethod) {
 
         break;
     case "PUT":
-        /*$auth  = validateAuth();
-        if(!$auth){
-            exit();
-        }*/
         $data = json_decode(file_get_contents('php://input'));
         if (isset($data) && isset($data->id)) {
             $params = [
